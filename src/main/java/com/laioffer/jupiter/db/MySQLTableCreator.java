@@ -9,6 +9,8 @@ public class MySQLTableCreator {
     public static void main(String[] args) {
         try {
 
+            // check the following example of how to connect to MySQL and execute SQL queries with JDBC library:
+            // https://dev.mysql.com/doc/connector-j/8.0/en/connector-j-usagenotes-connect-drivermanager.html
             // Step 1 Connect to MySQL.
             System.out.println("Connecting to " + MySQLDBUtil.getMySQLAddress());
             Class.forName("com.mysql.cj.jdbc.Driver").newInstance();
@@ -19,6 +21,8 @@ public class MySQLTableCreator {
             }
 
             // Step 2 Drop tables in case they exist.
+            // this means whenever this main function is called
+            // it will drop all the tables if existed before creates new ones
             Statement statement = conn.createStatement();
             String sql = "DROP TABLE IF EXISTS favorite_records";
             statement.executeUpdate(sql);
@@ -55,7 +59,7 @@ public class MySQLTableCreator {
                     + "user_id VARCHAR(255) NOT NULL,"
                     + "item_id VARCHAR(255) NOT NULL,"
                     + "last_favor_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,"
-                    + "PRIMARY KEY (user_id, item_id),"
+                    + "PRIMARY KEY (user_id, item_id)," // combination primary key
                     + "FOREIGN KEY (user_id) REFERENCES users(id),"
                     + "FOREIGN KEY (item_id) REFERENCES items(id)"
                     + ")";

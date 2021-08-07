@@ -14,12 +14,13 @@ import java.io.IOException;
 public class SearchServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        // Get game ID from request URL.
         String gameId = request.getParameter("game_id");
         if (gameId == null) {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             return;
         }
-
+        // Create a TwitchClient to send requests from our server to Twitch API
         TwitchClient client = new TwitchClient();
         try {
             ServletUtil.writeItemMap(response, client.searchItems(gameId));

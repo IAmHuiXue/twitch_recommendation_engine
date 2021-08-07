@@ -14,12 +14,16 @@ import java.io.IOException;
 // @WebServlet annotation is to map the Servlet class and the url pattern
 // so that when the server receives HTTP request, it will map to the corresponding Servlet
 @WebServlet(name = "GameServlet", urlPatterns = {"/game"})
+// use GameServlet to serve game queries
+// clients send the request either with a game name as the parameter, and we return the
+// details of that game, or without a game name, and we return the details of a list of top games
 public class GameServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException,
             IOException {
-        // Get gameName from request URL.
+        // Get gameName from request URL
         String gameName = request.getParameter("game_name");
+        // Create a TwitchClient to send requests from our server to Twitch API
         TwitchClient client = new TwitchClient();
 
         // Let the client know the returned data is in JSON format.
@@ -28,7 +32,8 @@ public class GameServlet extends HttpServlet {
             // Return the dedicated game information if gameName is provided in the request URL,
             // otherwise return the top x games.
             if (gameName != null) {
-                // ObjectMapper is a mapper tool provided by Jackson to turn Java objects into JSON strings
+                // ObjectMapper is a mapper tool provided by Jackson to convert between JSON strings and Java objects
+                // here it turns Java objects into JSON strings by writeValueAsString() method
                 response.getWriter().print(new ObjectMapper().writeValueAsString(client.searchGame(gameName)));
             } else {
                 response.getWriter().print(new ObjectMapper().writeValueAsString(client.topGames(0)));

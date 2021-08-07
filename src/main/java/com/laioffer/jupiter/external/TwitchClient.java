@@ -19,6 +19,7 @@ import java.net.URLEncoder;
 import java.util.*;
 
 public class TwitchClient {
+    // this class is created to invoke Twitch API from our server end
     // this token is generated when we send POST request including client id & secret token to twitch
     private static final String TOKEN = "Bearer n5gt1tuktfxy17gzn8g814paurjsu7";
     private static final String CLIENT_ID = "7bozusbbgy8tlw59xe6oifq5bidu51";
@@ -29,6 +30,7 @@ public class TwitchClient {
     private static final String STREAM_SEARCH_URL_TEMPLATE = "https://api.twitch.tv/helix/streams?game_id=%s&first=%s";
     private static final String VIDEO_SEARCH_URL_TEMPLATE = "https://api.twitch.tv/helix/videos?game_id=%s&first=%s";
     private static final String CLIP_SEARCH_URL_TEMPLATE = "https://api.twitch.tv/helix/clips?game_id=%s&first=%s";
+    // we need Twitch base url to build up the corresponding url to return to clients
     private static final String TWITCH_BASE_URL = "https://www.twitch.tv/";
     private static final int DEFAULT_SEARCH_LIMIT = 20;
 
@@ -36,7 +38,7 @@ public class TwitchClient {
     // e.g. https://api.twitch.tv/helix/games/top when trying to get top games.
     private String buildGameURL(String url, String gameName, int limit) {
         if (gameName.equals("")) {
-            return String.format(url, limit);
+            return String.format(url, limit); // if gameName is empty, url + limit
         } else {
             try {
                 // Encode special characters in URL, e.g. Rick Sun -> Rick%20Sun
@@ -44,7 +46,7 @@ public class TwitchClient {
             } catch (UnsupportedEncodingException e) {
                 e.printStackTrace();
             }
-            return String.format(url, gameName);
+            return String.format(url, gameName); // if gameName not empty, dedicated game
         }
     }
 
@@ -60,7 +62,7 @@ public class TwitchClient {
     }
 
     // Send HTTP requests to Twitch Backend based on the given URL,
-    // and returns the body of the HTTP response returned from Twitch backend.
+    // and return the body of the HTTP response returned from Twitch backend.
     private String searchTwitch(String url) throws TwitchException {
         CloseableHttpClient httpclient = HttpClients.createDefault();
 
@@ -101,6 +103,8 @@ public class TwitchClient {
     private List<Game> getGameList(String data) throws TwitchException {
         ObjectMapper mapper = new ObjectMapper();
         try {
+            // ObjectMapper is a mapper tool provided by Jackson to convert between JSON strings and Java objects
+            // here it turns JSON strings into Java objects by readValue() method
             return Arrays.asList(mapper.readValue(data, Game[].class));
         } catch (JsonProcessingException e) {
             e.printStackTrace();
@@ -110,6 +114,10 @@ public class TwitchClient {
 
     // Integrate search() and getGameList() together, returns the top x popular games from Twitch.
     public List<Game> topGames(int limit) throws TwitchException {
+        // providing limit by GameServlet
+        // 1. build game url
+        // 2. send an HTTP request to Twitch by searchTwitch()
+        // 3. convert the response data in JSON format from Twitch to list of Java objects by getGameList()
         if (limit <= 0) {
             limit = DEFAULT_GAME_LIMIT;
         }
@@ -118,6 +126,10 @@ public class TwitchClient {
 
     // Integrate search() and getGameList() together, returns the dedicated game based on the game name.
     public Game searchGame(String gameName) throws TwitchException {
+        // providing gameName by GameServlet
+        // 1. build game url
+        // 2. send an HTTP request to Twitch by searchTwitch()
+        // 3. convert the response data in JSON format from Twitch to list of Java objects by getGameList()
         List<Game> gameList = getGameList(searchTwitch(buildGameURL(GAME_SEARCH_URL_TEMPLATE, gameName, 0)));
         if (gameList.size() != 0) {
             return gameList.get(0);
@@ -125,7 +137,7 @@ public class TwitchClient {
         return null;
     }
 
-    // Similar to getGameList, convert the json data returned from Twitch to a list of Item objects.
+    // Similar to getGameList, convert the JSON data returned from Twitch to a list of Item objects.
     private List<Item> getItemList(String data) throws TwitchException {
         ObjectMapper mapper = new ObjectMapper();
         try {
@@ -141,7 +153,10 @@ public class TwitchClient {
         List<Item> streams = getItemList(searchTwitch(buildSearchURL(STREAM_SEARCH_URL_TEMPLATE, gameId, limit)));
         for (Item item : streams) {
             // TODO: encode broadcaster name
+            // we need to assign types to the items returned from Twitch
             item.setType(ItemType.STREAM);
+            // streams returned from Twitch do not have directly url, so we need to build one
+            // clips and videos returned from Twitch have urls.
             item.setUrl(TWITCH_BASE_URL + item.getBroadcasterName());
         }
         return streams;
@@ -151,6 +166,7 @@ public class TwitchClient {
     private List<Item> searchClips(String gameId, int limit) throws TwitchException {
         List<Item> clips = getItemList(searchTwitch(buildSearchURL(CLIP_SEARCH_URL_TEMPLATE, gameId, limit)));
         for (Item item : clips) {
+            // we need to assign types to the items returned from Twitch
             item.setType(ItemType.CLIP);
         }
         return clips;
@@ -160,10 +176,12 @@ public class TwitchClient {
     private List<Item> searchVideos(String gameId, int limit) throws TwitchException {
         List<Item> videos = getItemList(searchTwitch(buildSearchURL(VIDEO_SEARCH_URL_TEMPLATE, gameId, limit)));
         for (Item item : videos) {
+            // we need to assign types to the items returned from Twitch
             item.setType(ItemType.VIDEO);
         }
         return videos;
     }
+
 
     public List<Item> searchByType(String gameId, ItemType type, int limit) throws TwitchException {
         List<Item> items = Collections.emptyList();

@@ -6,17 +6,19 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 // these annotations are to handle some edge cases
-/*
-@JsonIgnoreProperties(ignoreUnknown = true) indicates that other fields in the response can be safely ignored.
-Without this, you’ll get an exception at runtime.
-@JsonInclude(JsonInclude.Include.NON_NULL) indicates that null fields can be skipped and not included.
-@JsonDeserialize indicates that Jackson needs to use Game.Builder when constructing a Game object from JSON strings.
- */
+// @JsonIgnoreProperties(ignoreUnknown = true) indicates that other fields in the response can be safely ignored.
 @JsonIgnoreProperties(ignoreUnknown = true)
+// @JsonInclude(JsonInclude.Include.NON_NULL) indicates that null fields can be skipped and not included.
 @JsonInclude(JsonInclude.Include.NON_NULL)
+// @JsonDeserialize indicates that Jackson needs to use Game.Builder when constructing a Game object from JSON strings.
 @JsonDeserialize(builder = Game.Builder.class)
 // GAME OBJECT --> JSON OBJECT
 public class Game {
+    // @JsonProperty("") indicates the mapping, the exact match is not required,
+    // but it’s required for multi-word snake case and camel case conversions, like release_time to releaseTime.
+
+    // these fields need to match the Twitch response
+    // https://dev.twitch.tv/docs/api/reference#get-games
     @JsonProperty("id")
     private final String id;
 

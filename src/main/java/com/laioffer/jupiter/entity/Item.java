@@ -5,10 +5,13 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-
+// Since the information of stream, video and clip are pretty similar,
+// we’ll use Item class to represent all of them through our project
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonDeserialize(builder = Item.Builder.class)
+
+
 public class Item {
     @JsonProperty("id")
     private final String id;
@@ -20,6 +23,7 @@ public class Item {
     private final String thumbnailUrl;
 
     @JsonProperty("broadcaster_name")
+    // @JsonAlias indicates that the field could be retrieved by another key
     @JsonAlias({ "user_name" })
     private String broadcasterName;
 
@@ -43,7 +47,7 @@ public class Item {
     }
 
     // Item class has some setters as well because fields like type, url and gameId may not return from Twitch,
-    // and we need to update the value after Jackson deserialize the data.
+    // and we need to update the value after Jackson deserializes the data.
     public String getId() {
         return id;
     }
