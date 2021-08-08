@@ -17,6 +17,30 @@ import java.util.Map;
 
 @WebServlet(name = "FavoriteServlet", value = {"/favorite"})
 public class FavoriteServlet extends HttpServlet {
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        // Check if the session is still valid, which means the user has been logged in successfully.
+        HttpSession session = request.getSession(false);
+        if (session == null) {
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            return;
+        }
+        String userId = (String) session.getAttribute("user_id");
+        Map<String, List<Item>> itemMap;
+        MySQLConnection connection = null;
+        try {
+            // Read the favorite items from the database
+            connection = new MySQLConnection();
+            itemMap = connection.getFavoriteItems(userId);
+            ServletUtil.writeItemMap(response, itemMap);
+        } catch (MySQLException e) {
+            throw new ServletException(e);
+        } finally {
+            if (connection != null) {
+                connection.close();
+            }
+        }
+    }
+
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         HttpSession session = request.getSession(false);
         if (session == null) {
@@ -34,30 +58,6 @@ public class FavoriteServlet extends HttpServlet {
             // Save the favorite item to the database
             connection = new MySQLConnection();
             connection.setFavoriteItem(userId, body.getFavoriteItem());
-        } catch (MySQLException e) {
-            throw new ServletException(e);
-        } finally {
-            if (connection != null) {
-                connection.close();
-            }
-        }
-    }
-
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        // Check if the session is still valid, which means the user has been logged in successfully.
-        HttpSession session = request.getSession(false);
-        if (session == null) {
-            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-            return;
-            }
-        String userId = (String) session.getAttribute("user_id");
-        Map<String, List<Item>> itemMap;
-        MySQLConnection connection = null;
-        try {
-            // Read the favorite items from the database
-            connection = new MySQLConnection();
-            itemMap = connection.getFavoriteItems(userId);
-            ServletUtil.writeItemMap(response, itemMap);
         } catch (MySQLException e) {
             throw new ServletException(e);
         } finally {

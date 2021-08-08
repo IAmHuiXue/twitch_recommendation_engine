@@ -22,7 +22,7 @@ public class RegisterServlet extends HttpServlet {
             return;
         }
 
-        boolean isUserAdded = false;
+        boolean isUserAdded;
         MySQLConnection connection = null;
         try {
             // Add the new user to the database

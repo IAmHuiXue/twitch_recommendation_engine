@@ -45,6 +45,7 @@ public class LoginServlet extends HttpServlet {
             // and set the expiration time to 600 seconds.
             HttpSession session = request.getSession();
             session.setAttribute("user_id", body.getUserId());
+            // set the max valid login period
             session.setMaxInactiveInterval(600);
 
             LoginResponseBody loginResponseBody = new LoginResponseBody(body.getUserId(), username);

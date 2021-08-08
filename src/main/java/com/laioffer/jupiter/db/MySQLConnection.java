@@ -20,7 +20,7 @@ public class MySQLConnection {
             throw new MySQLException("Failed to connect to Database");
         }
     }
-
+    // helps close the connection
     public void close() {
         if (conn != null) {
             try {
@@ -64,6 +64,7 @@ public class MySQLConnection {
         String sql = "DELETE FROM favorite_records WHERE user_id = ? AND item_id = ?";
         try {
             PreparedStatement statement = conn.prepareStatement(sql);
+            // the library requires starting index from 1, not 0
             statement.setString(1, userId);
             statement.setString(2, itemId);
             statement.executeUpdate();
@@ -74,6 +75,8 @@ public class MySQLConnection {
     }
 
     // Insert an item to the database.
+    // this method is called whenever the item is set to favorite by a user, and this item has not existed in the
+    // item table yet
     public void saveItem(Item item) throws MySQLException {
         if (conn == null) {
             System.err.println("DB connection failed");
@@ -82,6 +85,7 @@ public class MySQLConnection {
         String sql = "INSERT IGNORE INTO items VALUES (?, ?, ?, ?, ?, ?, ?)";
         try {
             PreparedStatement statement = conn.prepareStatement(sql);
+            // the library requires starting index from 1, not 0
             statement.setString(1, item.getId());
             statement.setString(2, item.getTitle());
             statement.setString(3, item.getUrl());
@@ -96,31 +100,6 @@ public class MySQLConnection {
         }
     }
 
-    // Get favorite item ids for the given user
-    public Set<String> getFavoriteItemIds(String userId) throws MySQLException {
-        if (conn == null) {
-            System.err.println("DB connection failed");
-            throw new MySQLException("Failed to connect to Database");
-        }
-
-        Set<String> favoriteItems = new HashSet<>();
-        String sql = "SELECT item_id FROM favorite_records WHERE user_id = ?";
-        try {
-            PreparedStatement statement = conn.prepareStatement(sql);
-            statement.setString(1, userId);
-            ResultSet rs = statement.executeQuery();
-            while (rs.next()) {
-                String itemId = rs.getString("item_id");
-                favoriteItems.add(itemId);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-            throw new MySQLException("Failed to get favorite item ids from Database");
-        }
-
-        return favoriteItems;
-    }
-
     // Get favorite items for the given user. The returned map includes three entries like
     // {"Video": [item1, item2, item3], "Stream": [item4, item5, item6], "Clip": [item7, item8, ...]}
     public Map<String, List<Item>> getFavoriteItems(String userId) throws MySQLException {
@@ -132,7 +111,10 @@ public class MySQLConnection {
         for (ItemType type : ItemType.values()) {
             itemMap.put(type.toString(), new ArrayList<>());
         }
+        // firstly get the set of favoriteItemIds
         Set<String> favoriteItemIds = getFavoriteItemIds(userId);
+        // secondly access to items table to get the info of each item
+        // TODO: how to refine the sql command to get the info for all favorite items by accessing to DB once?
         String sql = "SELECT * FROM items WHERE id = ?";
         try {
             PreparedStatement statement = conn.prepareStatement(sql);
@@ -154,6 +136,33 @@ public class MySQLConnection {
             throw new MySQLException("Failed to get favorite items from Database");
         }
         return itemMap;
+    }
+
+    // Get favorite item ids for the given user.
+    // in order to get users their favorite items, we need to access to favorite_records table, to
+    // firstly get the item ids with corresponding user_id
+    public Set<String> getFavoriteItemIds(String userId) throws MySQLException {
+        if (conn == null) {
+            System.err.println("DB connection failed");
+            throw new MySQLException("Failed to connect to Database");
+        }
+
+        Set<String> favoriteItemIds = new HashSet<>();
+        String sql = "SELECT item_id FROM favorite_records WHERE user_id = ?";
+        try {
+            PreparedStatement statement = conn.prepareStatement(sql);
+            statement.setString(1, userId);
+            ResultSet rs = statement.executeQuery();
+            while (rs.next()) {
+                String itemId = rs.getString("item_id");
+                favoriteItemIds.add(itemId);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw new MySQLException("Failed to get favorite item ids from Database");
+        }
+
+        return favoriteItemIds;
     }
 
     // Get favorite game ids for the given user. The returned map includes three entries like
@@ -184,7 +193,8 @@ public class MySQLConnection {
         return itemMap;
     }
 
-    // Verify if the given user id and password are correct. Returns the username when it passes
+    // Verify if the given user id and password are correct.
+    // Return the user's full name when the verification passes
     public String verifyLogin(String userId, String password) throws MySQLException {
         if (conn == null) {
             System.err.println("DB connection failed");
@@ -208,6 +218,7 @@ public class MySQLConnection {
     }
 
     // Add a new user to the database
+    // return true if successfully added
     public boolean addUser(User user) throws MySQLException {
         if (conn == null) {
             System.err.println("DB connection failed");
