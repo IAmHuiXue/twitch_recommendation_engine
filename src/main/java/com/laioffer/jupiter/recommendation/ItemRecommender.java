@@ -18,6 +18,8 @@ public class ItemRecommender {
     private static final int DEFAULT_PER_GAME_RECOMMENDATION_LIMIT = 10;
     private static final int DEFAULT_TOTAL_RECOMMENDATION_LIMIT = 20;
 
+    // to handle recommendation when the user is not logged in.
+    // The recommendation is purely based-on top games returned by Twitch
     // Return a list of Item objects for the given type. Types are one of [Stream, Video, Clip].
     // Add items are related to the top games provided in the argument
     private List<Item> recommendByTopGames(ItemType type, List<Game> topGames) throws RecommendationException {
