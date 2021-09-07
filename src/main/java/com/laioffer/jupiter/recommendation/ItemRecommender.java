@@ -18,6 +18,68 @@ public class ItemRecommender {
     private static final int DEFAULT_PER_GAME_RECOMMENDATION_LIMIT = 10;
     private static final int DEFAULT_TOTAL_RECOMMENDATION_LIMIT = 20;
 
+    // If the user is successfully logged in, recommend by the favorite records,
+    // Return a map of Item objects as the recommendation result. Keys of the map are [Stream, Video, Clip].
+    // Each key is corresponding to a list of Items objects,
+    // each item object is a recommended item based on the previous favorite records by the user.
+    public Map<String, List<Item>> recommendItemsByUser(String userId) throws RecommendationException {
+        Map<String, List<Item>> recommendedItemMap = new HashMap<>();
+        Set<String> favoriteItemIds;
+        Map<String, List<String>> favoriteGameIds;
+        MySQLConnection connection = null;
+        // need to access to db to get favorite item ids and favorite game ids from user
+        try {
+            connection = new MySQLConnection();
+            favoriteItemIds = connection.getFavoriteItemIds(userId);
+            favoriteGameIds = connection.getFavoriteGameIds(favoriteItemIds);
+        } catch (MySQLException e) {
+            throw new RecommendationException("Failed to get user favorite history for recommendation");
+        } finally {
+            connection.close();
+        }
+
+        for (Map.Entry<String, List<String>> entry : favoriteGameIds.entrySet()) {
+            if (entry.getValue().size() == 0) {
+                // if in this item type, the user does not have favorite records
+                // then recommend by default twitch top games
+                TwitchClient client = new TwitchClient();
+                List<Game> topGames;
+                try {
+                    // fetch data from Twitch API
+                    topGames = client.topGames(DEFAULT_GAME_LIMIT);
+                } catch (TwitchException e) {
+                    throw new RecommendationException("Failed to get game data for recommendation");
+                }
+                recommendedItemMap.put(entry.getKey(),
+                        recommendByTopGames(ItemType.valueOf(entry.getKey()), topGames));
+            } else {
+                // recommend by user favorite history
+                recommendedItemMap.put(entry.getKey(),
+                        recommendByFavoriteHistory(favoriteItemIds, entry.getValue(),
+                                ItemType.valueOf(entry.getKey())));
+            }
+        }
+        return recommendedItemMap;
+    }
+    // If the user is not logged in, recommend by the top games.
+    // Return a map of Item objects as the recommendation result. Keys of the map are [Stream, Video, Clip].
+    // Each key is corresponding to a list of Items objects,
+    // each item object is a recommended item based on the top games currently on Twitch.
+    public Map<String, List<Item>> recommendItemsByDefault() throws RecommendationException {
+        Map<String, List<Item>> recommendedItemMap = new HashMap<>();
+        TwitchClient client = new TwitchClient();
+        List<Game> topGames;
+        try {
+            topGames = client.topGames(DEFAULT_GAME_LIMIT);
+        } catch (TwitchException e) {
+            throw new RecommendationException("Failed to get game data for recommendation");
+        }
+
+        for (ItemType type : ItemType.values()) {
+            recommendedItemMap.put(type.toString(), recommendByTopGames(type, topGames));
+        }
+        return recommendedItemMap;
+    }
     // to handle recommendation when the user is not logged in.
     // The recommendation is purely based-on top games returned by Twitch
     // Return a list of Item objects for the given type. Types are one of [Stream, Video, Clip].
@@ -91,6 +153,7 @@ public class ItemRecommender {
                 if (recommendedItems.size() == DEFAULT_TOTAL_RECOMMENDATION_LIMIT) {
                     break outerloop;
                 }
+                // avoid recommending the items that have been in user's favorite list
                 if (!favoritedItemIds.contains(item.getId())) {
                     recommendedItems.add(item);
                 }
@@ -98,65 +161,4 @@ public class ItemRecommender {
         }
         return recommendedItems;
     }
-
-    // If the user is successfully logged in, recommend by the favorite records,
-    // Return a map of Item objects as the recommendation result. Keys of the map are [Stream, Video, Clip].
-    // Each key is corresponding to a list of Items objects,
-    // each item object is a recommended item based on the previous favorite records by the user.
-    public Map<String, List<Item>> recommendItemsByUser(String userId) throws RecommendationException {
-        Map<String, List<Item>> recommendedItemMap = new HashMap<>();
-        Set<String> favoriteItemIds;
-        Map<String, List<String>> favoriteGameIds;
-        MySQLConnection connection = null;
-        try {
-            connection = new MySQLConnection();
-            favoriteItemIds = connection.getFavoriteItemIds(userId);
-            favoriteGameIds = connection.getFavoriteGameIds(favoriteItemIds);
-        } catch (MySQLException e) {
-            throw new RecommendationException("Failed to get user favorite history for recommendation");
-        } finally {
-            connection.close();
-        }
-
-        for (Map.Entry<String, List<String>> entry : favoriteGameIds.entrySet()) {
-            // does not have favorite records
-            // recommend by default twitch top games
-            if (entry.getValue().size() == 0) {
-                TwitchClient client = new TwitchClient();
-                List<Game> topGames;
-                try {
-                    topGames = client.topGames(DEFAULT_GAME_LIMIT);
-                } catch (TwitchException e) {
-                    throw new RecommendationException("Failed to get game data for recommendation");
-                }
-                recommendedItemMap.put(entry.getKey(),
-                        recommendByTopGames(ItemType.valueOf(entry.getKey()), topGames));
-            } else {
-                recommendedItemMap.put(entry.getKey(),
-                        recommendByFavoriteHistory(favoriteItemIds, entry.getValue(),
-                                ItemType.valueOf(entry.getKey())));
-            }
-        }
-        return recommendedItemMap;
-    }
-    // If the user is not logged in, recommend by the top games.
-    // Return a map of Item objects as the recommendation result. Keys of the map are [Stream, Video, Clip].
-    // Each key is corresponding to a list of Items objects,
-    // each item object is a recommended item based on the top games currently on Twitch.
-    public Map<String, List<Item>> recommendItemsByDefault() throws RecommendationException {
-        Map<String, List<Item>> recommendedItemMap = new HashMap<>();
-        TwitchClient client = new TwitchClient();
-        List<Game> topGames;
-        try {
-            topGames = client.topGames(DEFAULT_GAME_LIMIT);
-        } catch (TwitchException e) {
-            throw new RecommendationException("Failed to get game data for recommendation");
-        }
-
-        for (ItemType type : ItemType.values()) {
-            recommendedItemMap.put(type.toString(), recommendByTopGames(type, topGames));
-        }
-        return recommendedItemMap;
-    }
-
 }

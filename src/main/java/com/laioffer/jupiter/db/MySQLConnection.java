@@ -167,6 +167,7 @@ public class MySQLConnection {
 
     // Get favorite game ids for the given user. The returned map includes three entries like
     // {"Video": ["1234", "5678", ...], "Stream": ["abcd", "efgh", ...], "Clip": ["4321", "5678", ...]}
+    // this function is a helper function when recommending items based on user's favorite history
     public Map<String, List<String>> getFavoriteGameIds(Set<String> favoriteItemIds) throws MySQLException {
         if (conn == null) {
             System.err.println("DB connection failed");
@@ -176,6 +177,7 @@ public class MySQLConnection {
         for (ItemType type : ItemType.values()) {
             itemMap.put(type.toString(), new ArrayList<>());
         }
+        // access to items table from db to get the info of each item based on item id
         String sql = "SELECT game_id, type FROM items WHERE id = ?";
         try {
             PreparedStatement statement = conn.prepareStatement(sql);

@@ -34,33 +34,6 @@ public class TwitchClient {
     private static final String TWITCH_BASE_URL = "https://www.twitch.tv/";
     private static final int DEFAULT_SEARCH_LIMIT = 20;
 
-    // Build the request URL which will be used when calling Twitch APIs,
-    // e.g. https://api.twitch.tv/helix/games/top when trying to get top games.
-    private String buildGameURL(String url, String gameName, int limit) {
-        if (gameName.equals("")) {
-            return String.format(url, limit); // if gameName is empty, url + limit
-        } else {
-            try {
-                // Encode special characters in URL, e.g. Rick Sun -> Rick%20Sun
-                gameName = URLEncoder.encode(gameName, "UTF-8");
-            } catch (UnsupportedEncodingException e) {
-                e.printStackTrace();
-            }
-            return String.format(url, gameName); // if gameName not empty, dedicated game
-        }
-    }
-
-    // Similar to buildGameURL, build Search URL that will be used when calling Twitch API.
-    // e.g. https://api.twitch.tv/helix/clips?game_id=12924.
-    private String buildSearchURL(String url, String gameId, int limit) {
-        try {
-            gameId = URLEncoder.encode(gameId, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
-        return String.format(url, gameId, limit);
-    }
-
     // Send HTTP requests to Twitch Backend based on the given URL,
     // and return the body of the HTTP response returned from Twitch backend.
     private String searchTwitch(String url) throws TwitchException {
@@ -99,19 +72,6 @@ public class TwitchClient {
         }
     }
 
-    // Convert JSON format data returned from Twitch to an Arraylist of Game objects
-    private List<Game> getGameList(String data) throws TwitchException {
-        ObjectMapper mapper = new ObjectMapper();
-        try {
-            // ObjectMapper is a mapper tool provided by Jackson to convert between JSON strings and Java objects
-            // here it turns JSON strings into Java objects by readValue() method
-            return Arrays.asList(mapper.readValue(data, Game[].class));
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-            throw new TwitchException("Failed to parse game data from Twitch API");
-        }
-    }
-
     // Integrate search() and getGameList() together, returns the top x popular games from Twitch.
     public List<Game> topGames(int limit) throws TwitchException {
         // providing limit by GameServlet
@@ -137,15 +97,66 @@ public class TwitchClient {
         return null;
     }
 
-    // Similar to getGameList, convert the JSON data returned from Twitch to a list of Item objects.
-    private List<Item> getItemList(String data) throws TwitchException {
+    // Build the request URL which will be used when calling Twitch APIs,
+    // e.g. https://api.twitch.tv/helix/games/top when trying to get top games.
+    private String buildGameURL(String url, String gameName, int limit) {
+        if (gameName.equals("")) {
+            return String.format(url, limit); // if gameName is empty, url + limit
+        } else {
+            try {
+                // Encode special characters in URL, e.g. Rick Sun -> Rick%20Sun
+                gameName = URLEncoder.encode(gameName, "UTF-8");
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }
+            return String.format(url, gameName); // if gameName not empty, dedicated game
+        }
+    }
+
+    // Convert JSON format data returned from Twitch to an Arraylist of Game objects
+    private List<Game> getGameList(String data) throws TwitchException {
         ObjectMapper mapper = new ObjectMapper();
         try {
-            return Arrays.asList(mapper.readValue(data, Item[].class));
+            // ObjectMapper is a mapper tool provided by Jackson to convert between JSON strings and Java objects
+            // here it turns JSON strings into Java objects by readValue() method
+            // and return a list of game objects
+            return Arrays.asList(mapper.readValue(data, Game[].class));
         } catch (JsonProcessingException e) {
             e.printStackTrace();
-            throw new TwitchException("Failed to parse item data from Twitch API");
+            throw new TwitchException("Failed to parse game data from Twitch API");
         }
+    }
+
+
+
+
+    public Map<String, List<Item>> searchItems(String gameId) throws TwitchException {
+        Map<String, List<Item>> itemMap = new HashMap<>();
+        for (ItemType type : ItemType.values()) {
+            // for each itemType, do searchByType()
+            itemMap.put(type.toString(), searchByType(gameId, type, DEFAULT_SEARCH_LIMIT));
+        }
+        return itemMap;
+    }
+
+    public List<Item> searchByType(String gameId, ItemType type, int limit) throws TwitchException {
+        List<Item> items = Collections.emptyList();
+        switch (type) {
+            case STREAM:
+                items = searchStreams(gameId, limit);
+                break;
+            case VIDEO:
+                items = searchVideos(gameId, limit);
+                break;
+            case CLIP:
+                items = searchClips(gameId, limit);
+                break;
+        }
+        // Update gameId for all items. GameId is used by recommendation function
+        for (Item item : items) {
+            item.setGameId(gameId);
+        }
+        return items;
     }
 
     // Returns the top x streams based on game ID.
@@ -182,34 +193,26 @@ public class TwitchClient {
         return videos;
     }
 
-
-    public List<Item> searchByType(String gameId, ItemType type, int limit) throws TwitchException {
-        List<Item> items = Collections.emptyList();
-
-        switch (type) {
-            case STREAM:
-                items = searchStreams(gameId, limit);
-                break;
-            case VIDEO:
-                items = searchVideos(gameId, limit);
-                break;
-            case CLIP:
-                items = searchClips(gameId, limit);
-                break;
+    // Similar to buildGameURL, build Search URL that will be used when calling Twitch API.
+    // e.g. https://api.twitch.tv/helix/clips?game_id=12924.
+    private String buildSearchURL(String url, String gameId, int limit) {
+        try {
+            gameId = URLEncoder.encode(gameId, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
         }
-
-        // Update gameId for all items. GameId is used by recommendation function
-        for (Item item : items) {
-            item.setGameId(gameId);
-        }
-        return items;
+        return String.format(url, gameId, limit);
     }
 
-    public Map<String, List<Item>> searchItems(String gameId) throws TwitchException {
-        Map<String, List<Item>> itemMap = new HashMap<>();
-        for (ItemType type : ItemType.values()) {
-            itemMap.put(type.toString(), searchByType(gameId, type, DEFAULT_SEARCH_LIMIT));
+    // Similar to getGameList, convert the JSON data returned from Twitch to a list of Item objects.
+    private List<Item> getItemList(String data) throws TwitchException {
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            // return a list of item objects
+            return Arrays.asList(mapper.readValue(data, Item[].class));
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            throw new TwitchException("Failed to parse item data from Twitch API");
         }
-        return itemMap;
     }
 }
