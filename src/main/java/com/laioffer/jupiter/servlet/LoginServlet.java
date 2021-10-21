@@ -50,7 +50,7 @@ public class LoginServlet extends HttpServlet {
 
             LoginResponseBody loginResponseBody = new LoginResponseBody(body.getUserId(), username);
             response.setContentType("application/json;charset=UTF-8");
-            ObjectMapper mapper = new ObjectMapper();
+//            ObjectMapper mapper = new ObjectMapper();
             response.getWriter().print(new ObjectMapper().writeValueAsString(loginResponseBody));
         } else {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
