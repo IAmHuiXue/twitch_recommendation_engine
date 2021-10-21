@@ -4,4 +4,4 @@ mykey.pem
 /target/
 /src/test/
 /src/main/resources/
-/src/main/java/com/laioffer/jupiter/external/TwitchClient.java
+/src/main/java/com/laioffer/jupiter/external/TwitchCredential.java
