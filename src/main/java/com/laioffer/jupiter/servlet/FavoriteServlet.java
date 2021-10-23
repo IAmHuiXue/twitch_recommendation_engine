@@ -2,7 +2,7 @@ package com.laioffer.jupiter.servlet;
 
 import com.laioffer.jupiter.db.MySQLConnection;
 import com.laioffer.jupiter.db.MySQLException;
-import com.laioffer.jupiter.entity.FavoriteRequestBody;
+import com.laioffer.jupiter.holders.FavoriteRequestBody;
 import com.laioffer.jupiter.entity.Item;
 
 import javax.servlet.ServletException;
@@ -15,15 +15,14 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
+import static com.laioffer.jupiter.servlet.ServletUtil.verifySession;
+
 @WebServlet(name = "FavoriteServlet", value = {"/favorite"})
 public class FavoriteServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         // Check if the session is still valid, which means the user has been logged in successfully.
         HttpSession session = request.getSession(false);
-        if (session == null) {
-            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-            return;
-        }
+        verifySession(session, response);
         String userId = (String) session.getAttribute("user_id");
         Map<String, List<Item>> itemMap;
         MySQLConnection connection = null;
@@ -43,10 +42,7 @@ public class FavoriteServlet extends HttpServlet {
 
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         HttpSession session = request.getSession(false);
-        if (session == null) {
-            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-            return;
-        }
+        verifySession(session, response);
         String userId = (String) session.getAttribute("user_id");
         FavoriteRequestBody body = ServletUtil.readRequestBody(FavoriteRequestBody.class, request);
         if (body == null) {
@@ -69,10 +65,7 @@ public class FavoriteServlet extends HttpServlet {
 
     protected void doDelete(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         HttpSession session = request.getSession(false);
-        if (session == null) {
-            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-            return;
-        }
+        verifySession(session, response);
         String userId = (String) session.getAttribute("user_id");
         FavoriteRequestBody body = ServletUtil.readRequestBody(FavoriteRequestBody.class, request);
         if (body == null) {

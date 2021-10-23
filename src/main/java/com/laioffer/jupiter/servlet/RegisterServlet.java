@@ -27,6 +27,7 @@ public class RegisterServlet extends HttpServlet {
         try {
             // Add the new user to the database
             connection = new MySQLConnection();
+            // encrypted password via common-codec library
             user.setPassword(ServletUtil.encryptPassword(user.getUserId(), user.getPassword()));
             isUserAdded = connection.addUser(user);
         } catch (MySQLException e) {

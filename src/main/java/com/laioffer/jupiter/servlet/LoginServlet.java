@@ -3,8 +3,8 @@ package com.laioffer.jupiter.servlet;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.laioffer.jupiter.db.MySQLConnection;
 import com.laioffer.jupiter.db.MySQLException;
-import com.laioffer.jupiter.entity.LoginRequestBody;
-import com.laioffer.jupiter.entity.LoginResponseBody;
+import com.laioffer.jupiter.holders.LoginRequestBody;
+import com.laioffer.jupiter.holders.LoginResponseBody;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -41,6 +41,10 @@ public class LoginServlet extends HttpServlet {
 
         // Create a new session for the user if user ID and password are correct, otherwise return Unauthorized error.
         if (!username.isEmpty()) {
+            // HttpSession: An interface provided by the servlet API, we can get a session from HttpServletRequest
+            // object using getSession(). HttpSession allows us to set objects as attributes that can be retrieved
+            // in future requests. The session ends when the user logs out or inactive after a predetermined period of time.
+
             // Create a new session, put user ID as an attribute into the session object,
             // and set the expiration time to 600 seconds.
             HttpSession session = request.getSession();
@@ -50,7 +54,6 @@ public class LoginServlet extends HttpServlet {
 
             LoginResponseBody loginResponseBody = new LoginResponseBody(body.getUserId(), username);
             response.setContentType("application/json;charset=UTF-8");
-//            ObjectMapper mapper = new ObjectMapper();
             response.getWriter().print(new ObjectMapper().writeValueAsString(loginResponseBody));
         } else {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);

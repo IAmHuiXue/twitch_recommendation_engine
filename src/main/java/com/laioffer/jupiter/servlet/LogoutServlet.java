@@ -15,6 +15,10 @@ public class LogoutServlet extends HttpServlet {
             session.invalidate();
         }
 
+        // Cookie: Cookies are text files stored on the client computer, and they are kept for user tracking purposes.
+        // The server script sends a set of cookies to the browser. The browser stores this information on a local
+        // machine for future use. When the next time the browser sends any request to the web server then it
+        // sends those cookies' information to the server and the server uses that information to identify the user.
         Cookie cookie = new Cookie("JSESSIONID", null);
         cookie.setPath("/");
         cookie.setMaxAge(0);

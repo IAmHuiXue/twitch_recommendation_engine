@@ -1,7 +1,8 @@
-package com.laioffer.jupiter.entity;
+package com.laioffer.jupiter.holders;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.laioffer.jupiter.entity.Item;
 
 // this is used for deserializing add/remove favorite requests
 public class FavoriteRequestBody {

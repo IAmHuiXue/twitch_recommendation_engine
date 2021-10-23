@@ -1,4 +1,4 @@
-package com.laioffer.jupiter.entity;
+package com.laioffer.jupiter.holders;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 

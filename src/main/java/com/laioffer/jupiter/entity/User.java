@@ -20,6 +20,7 @@ public class User {
 
     @JsonProperty("last_name")
     private final String lastName;
+
     private User(Builder builder) {
         this.userId = builder.userId;
         this.password = builder.password;
