@@ -1,6 +1,5 @@
 package com.laioffer.jupiter.servlet;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.laioffer.jupiter.db.MySQLConnection;
 import com.laioffer.jupiter.db.MySQLException;
 import com.laioffer.jupiter.holders.LoginRequestBody;
@@ -53,8 +52,9 @@ public class LoginServlet extends HttpServlet {
             session.setMaxInactiveInterval(600);
 
             LoginResponseBody loginResponseBody = new LoginResponseBody(body.getUserId(), username);
-            response.setContentType("application/json;charset=UTF-8");
-            response.getWriter().print(new ObjectMapper().writeValueAsString(loginResponseBody));
+            ServletUtil.writeItem(response, loginResponseBody);
+//            response.setContentType("application/json;charset=UTF-8");
+//            response.getWriter().print(new ObjectMapper().writeValueAsString(loginResponseBody));
         } else {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         }

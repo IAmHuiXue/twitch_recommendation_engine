@@ -3,20 +3,23 @@ package com.laioffer.jupiter.servlet;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.laioffer.jupiter.entity.Item;
 import org.apache.commons.codec.digest.DigestUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
-import java.util.List;
-import java.util.Map;
 
 public class ServletUtil {
-    public static void writeItemMap(HttpServletResponse response, Map<String, List<Item>> itemMap) throws IOException {
+
+//    public static void writeItemMap(HttpServletResponse response, Map<String, List<Item>> itemMap) throws IOException {
+//        response.setContentType("application/json;charset=UTF-8");
+//        response.getWriter().print(new ObjectMapper().writeValueAsString(itemMap));
+//    }
+
+    public static <T> void writeItem(HttpServletResponse response, T item) throws IOException {
         response.setContentType("application/json;charset=UTF-8");
-        response.getWriter().print(new ObjectMapper().writeValueAsString(itemMap));
+        response.getWriter().print(new ObjectMapper().writeValueAsString(item));
     }
 
     // Help encrypt the user password before save to the database

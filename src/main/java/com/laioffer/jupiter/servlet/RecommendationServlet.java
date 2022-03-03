@@ -34,6 +34,6 @@ public class RecommendationServlet extends HttpServlet {
             throw new ServletException(e);
         }
 
-        ServletUtil.writeItemMap(response, itemMap);
+        ServletUtil.writeItem(response, itemMap);
     }
 }

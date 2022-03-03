@@ -111,7 +111,7 @@ public class ItemRecommender {
     // E.g., if a user favorite some videos about game "Just Chatting",
     // then it will return some other videos about the same game.
     private List<Item> recommendByFavoriteHistory(
-            Set<String> favoritedItemIds, List<String> favoriteGameIds, ItemType type) throws RecommendationException {
+            Set<String> favoriteItemIds, List<String> favoriteGameIds, ItemType type) throws RecommendationException {
         // Count the favorite game IDs from the database for the given user.
         // E.g. if the favorite game ID list is ["1234", "2345", "2345", "3456"],
         // the returned Map is {"1234": 1, "2345": 2, "3456": 1}
@@ -154,7 +154,7 @@ public class ItemRecommender {
                     break outerloop;
                 }
                 // avoid recommending the items that have been in user's favorite list
-                if (!favoritedItemIds.contains(item.getId())) {
+                if (!favoriteItemIds.contains(item.getId())) {
                     recommendedItems.add(item);
                 }
             }

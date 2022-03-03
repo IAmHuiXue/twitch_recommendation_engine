@@ -23,7 +23,7 @@ public class SearchServlet extends HttpServlet {
         // Create a TwitchClient to send requests from our server to Twitch API
         TwitchClient client = new TwitchClient();
         try {
-            ServletUtil.writeItemMap(response, client.searchItems(gameId));
+            ServletUtil.writeItem(response, client.searchItems(gameId));
         } catch (TwitchException e) {
             throw new ServletException(e);
         }
